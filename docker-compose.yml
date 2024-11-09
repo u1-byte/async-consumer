@@ -1,0 +1,38 @@
+version: '3'
+x-base-env: &base-env
+  environment:
+      CONSUMER_COUNT: "15"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      RABBITMQ_QUEUE: "base_queue"
+      RABBITMQ_DLQ: "err_queue"
+      RABBITMQ_MAX_RETRY: "5"
+  networks:
+    - consumer-network
+  depends_on:
+    - rabbitmq
+
+services:
+  consumer:
+    container_name: base-consumer
+    command: ["python", "main.py", "consumer"]
+    build: .
+    <<: *base-env
+  producer:
+    container_name: base-producer
+    command: ["python", "main.py", "producer"]
+    build: .
+    <<: *base-env
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: base-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - consumer-network
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+networks:
+  consumer-network:
+volumes:
+  rabbitmq-data:
